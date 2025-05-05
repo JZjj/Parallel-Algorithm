@@ -3,7 +3,8 @@
 #include "stdio.h"
 #include "stdlib.h"
 #include "string.h"
-
+#include <shape.hpp>
+#include <helper.hpp>
 #include <algorithm>
 #include <random>
 #include <string>
