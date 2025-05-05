@@ -1,4 +1,15 @@
-#include "helper.hpp"
+#include "assert.h"
+#include "stdint.h"
+#include "stdio.h"
+#include "stdlib.h"
+#include "string.h"
+
+#include <algorithm>
+#include <random>
+#include <string>
+#include <chrono>
+
+#include <cuda.h>
 const int M          = 32; // the height of the output matrix
 const int N          = 32; // the width of the output matrix
 const int K          = 4;  // the length of the intermediate dimension in A*B
@@ -7,8 +18,7 @@ const int BLOCKDIM_Y = M / UNROLL;
 const int BLOCKDIM_X = N;
 const int BLOCKDIM_Z = 1;
 
-// Sequential code for the forward path of the convolution layer
-// You should not modify this code
+// Sequential code for the forward path of the convolution layer cpu
 static void conv_forward_valid(const float *X, const shape &xdims, const float *W, const shape &wdims, float *Y, const shape &ydims) {
   std::fill(Y, Y + ydims.flattened_length(), 0);
 
@@ -33,9 +43,6 @@ static void conv_forward_valid(const float *X, const shape &xdims, const float *
 }
 
 // Baseline GPU kernel code for forward convolution.
-// One thread per output index
-// You should not modify this kernel as it is used for correctness comparison.
-// Instead, define a new one below
 __global__ void conv_forward_baseline_kernel(const float *X, const shape xdims, const float *W, const shape wdims, float *Y,
                                              const shape ydims) {
 
@@ -74,9 +81,7 @@ static void convlayer_gpu_baseline(const float *X, const shape &xdims, const flo
   THROW_IF_ERROR(cudaGetLastError());
 }
 
-// Implement your optimized kernel here.
-// Make any modifications you wish.
-// Don't forget to modify the host code below, if needed!
+//parallel
 __global__ void conv_forward_opt_kernel(const float *X, const shape xdims, const float *W, const shape wdims, float *Y, const shape ydims) {
 
   // X[b, c, h+p, w+q] = X[((b * xdims.depth + c) * xdims.height + (h + p)) * xdims.width + (w + q)]
@@ -170,7 +175,8 @@ __global__ void conv_forward_opt_kernel(const float *X, const shape xdims, const
   }
 }
 
-// Host code to configure baseline GPU kernel
+//configure baseline GPU kernel
+
 static void convlayer_gpu_opt(const float *X, const shape &xdims, const float *W, const shape &wdims, float *Y, const shape &ydims) {
   // X[b, c, h+p, w+q] = X[((b * xdims.depth + c) * xdims.height + (h + p)) * xdims.width + (w + q)]
   // W[m, c, p, q] = W[((m * wdims.depth + c) * wdims.height + p) * wdims.width + q]
