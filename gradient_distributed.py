@@ -63,6 +63,6 @@ def run_worker(rank, world_size):
     dist.destroy_process_group()
 
 if __name__ == "__main__":
-    for world_size in (1, 2, 4, 6):
+    for world_size in (1, 2, 4, 6, 8, 10, 12, 14, 16):
         print(f"\n>>> Benchmarking manual AllReduce with world_size={world_size}")
         spawn(run_worker, args=(world_size,), nprocs=world_size, join=True)
